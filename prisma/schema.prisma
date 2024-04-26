@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model students {
+  student_id    Int            @id @default(autoincrement())
+  matric_number String         @unique
+  fullName      String
+  email         String         @unique
+  registrations registrations?
+}
+
+model admins {
+  admin_id Int    @id @default(autoincrement())
+  username String
+  password String
+}
+
+model skills {
+  skill_id      Int            @id @default(autoincrement())
+  skill_name    String
+  description   String
+  trainer       trainers       @relation(fields: [trainer_id], references: [trainer_id])
+  trainer_id    Int            @unique
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  registrations registrations?
+}
+
+model trainers {
+  trainer_id   Int     @id @default(autoincrement())
+  trainer_name String
+  email        String
+  phone_number String
+  skill        skills?
+}
+
+model registrations {
+  registration_id Int      @id @default(autoincrement())
+  student         students @relation(fields: [student_id], references: [student_id])
+  student_id      Int      @unique
+  skill           skills   @relation(fields: [skill_id], references: [skill_id])
+  skill_id        Int      @unique
+  date_registered DateTime @default(now())
+}
