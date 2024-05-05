@@ -33,6 +33,7 @@ model skills {
   description   String
   trainer       trainers       @relation(fields: [trainer_id], references: [trainer_id])
   trainer_id    Int            @unique
+  slots         Int
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   registrations registrations?

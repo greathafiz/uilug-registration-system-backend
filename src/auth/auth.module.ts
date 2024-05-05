@@ -3,8 +3,8 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { AdminModule } from 'src/admin/admin.module';
 import { JwtModule } from '@nestjs/jwt';
-import { jwtConstants } from './constants';
-// import { HttpModule } from '@nestjs/axios';
+import { jwtConstants, uilBaseUrl } from './constants';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -14,7 +14,11 @@ import { jwtConstants } from './constants';
       secret: jwtConstants.secret,
       signOptions: jwtConstants.options,
     }),
-    // HttpModule,
+    HttpModule.register({
+      timeout: 5000,
+      maxRedirects: 5,
+      baseURL: uilBaseUrl,
+    }),
   ],
   controllers: [AuthController],
   providers: [AuthService],

@@ -19,8 +19,17 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('login')
   create(@Body() signInDto: SignInDto) {
-    return this.authService.signIn(signInDto.username, signInDto.password);
+    return this.authService.validateUser(signInDto);
   }
+  // @Post('login')
+  // create(@Body() signInDto: SignInDto) {
+  //   return this.authService.logIn(signInDto);
+  // }
+
+  /* @Get('dummy')
+  findAllCourses() {
+    return this.authService.checkCourse();
+  } */
 
   @UseGuards(AuthGuard)
   @Get('profile')
