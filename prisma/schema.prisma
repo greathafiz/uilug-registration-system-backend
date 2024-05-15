@@ -16,7 +16,7 @@ datasource db {
 model students {
   student_id    Int            @id @default(autoincrement())
   matric_number String         @unique
-  fullName      String
+  full_name      String
   email         String         @unique
   registrations registrations?
 }

@@ -12,6 +12,7 @@ import { HttpService } from '@nestjs/axios';
 import { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { SignInDto } from './dto/sign-in.dto';
 import { Course } from '../interfaces/course.interface';
+import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class AuthService {
@@ -20,9 +21,10 @@ export class AuthService {
     private readonly adminService: AdminService,
     private readonly jwtService: JwtService,
     private readonly httpService: HttpService,
+    private readonly databaseService: DatabaseService,
   ) {}
 
-  async signIn({
+  async adminSignIn({
     username,
     password,
   }: SignInDto): Promise<{ access_token: string }> {
@@ -37,14 +39,20 @@ export class AuthService {
     };
   }
 
-  async validateUser({ username, password }: SignInDto): Promise<any> {
-    let axiosConfig: AxiosRequestConfig = {};
+  async studentSignIn(username: string): Promise<{ access_token: string }> {
+    const payload = { username: username };
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+    };
+  }
+
+  async validateUser({ username, password }: SignInDto): Promise<object> {
     const admin = await this.adminService.findOne(username);
 
     if (!admin) {
       const { data, headers } = await firstValueFrom(
         this.httpService
-          .post<object>('/login', {
+          .post('/login', {
             username,
             password,
           })
@@ -56,24 +64,8 @@ export class AuthService {
           ),
       );
 
-      const setCookieHeaders = headers['set-cookie'];
-      if (setCookieHeaders) {
-        const cookieArray = setCookieHeaders.map(
-          (header) => header.split(';')[0].split('=')[1],
-        );
-
-        const cookieHeader = cookieArray
-          .map((token) => `unilorin_portal_session=${token}`)
-          .join('; ');
-
-        axiosConfig = {
-          headers: {
-            Cookie: cookieHeader,
-          },
-        };
-      }
-
       if (data) {
+        const axiosConfig = this.setRequestHeaders(headers);
         const coursesArray = await firstValueFrom(
           this.httpService
             .get('/courseRegistrations/my-course-registrations', axiosConfig)
@@ -83,17 +75,79 @@ export class AuthService {
                 throw new HttpException(error, HttpStatus.UNAUTHORIZED);
               }),
               map((response) =>
-                response.data.data.map((course) => course.course.course_code),
+                response.data.data.map(
+                  (course: Course) => course.course.course_code,
+                ),
               ),
             ),
         );
 
-        // coursesArray.includes("GSE301") ?
+        const courseStatus = coursesArray.includes('GSE301') ? true : false;
 
-        return coursesArray;
+        // if (!courseStatus) {
+        //   throw new HttpException(
+        //     'GSE301 not among registered courses',
+        //     HttpStatus.UNAUTHORIZED,
+        //   );
+        // }
+
+        const studentDetails = {
+          full_name: data.data.fullname,
+          email: data.data.email,
+          matric_number: data.data.student_number,
+        };
+
+        this.databaseService.students.create({
+          data: studentDetails,
+        });
+
+        return this.studentSignIn(studentDetails.matric_number);
       }
     } else {
-      return this.signIn({ username, password });
+      return this.adminSignIn({ username, password });
     }
+  }
+
+  setRequestHeaders(headers: object) {
+    let axiosConfig: AxiosRequestConfig = {};
+    const setCookieHeader = headers['set-cookie'];
+
+    if (!setCookieHeader) {
+      throw new HttpException('Auth failed', HttpStatus.UNAUTHORIZED);
+    }
+
+    const cookieArray = setCookieHeader.map(
+      (header: string) => header.split(';')[0].split('=')[1],
+    );
+
+    const cookieHeader = cookieArray
+      .map((token: string) => `unilorin_portal_session=${token}`)
+      .join('; ');
+
+    axiosConfig = {
+      headers: {
+        Cookie: cookieHeader,
+      },
+    };
+    return axiosConfig;
+  }
+
+  async fetchStudentCourses(headers: object) {
+    const axiosConfig = this.setRequestHeaders(headers);
+    const coursesArray = await firstValueFrom(
+      this.httpService
+        .get('/courseRegistrations/my-course-registrations', axiosConfig)
+        .pipe(
+          catchError((error: AxiosError) => {
+            this.logger.error(error);
+            throw new HttpException(error, HttpStatus.UNAUTHORIZED);
+          }),
+          map((response) =>
+            response.data.data.map((course) => course.course.course_code),
+          ),
+        ),
+    );
+
+    return coursesArray;
   }
 }

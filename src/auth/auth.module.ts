@@ -5,6 +5,7 @@ import { AdminModule } from 'src/admin/admin.module';
 import { JwtModule } from '@nestjs/jwt';
 import { jwtConstants, uilBaseUrl } from './constants';
 import { HttpModule } from '@nestjs/axios';
+import { DatabaseModule } from 'src/database/database.module';
 
 @Module({
   imports: [
@@ -15,10 +16,11 @@ import { HttpModule } from '@nestjs/axios';
       signOptions: jwtConstants.options,
     }),
     HttpModule.register({
-      timeout: 5000,
+      timeout: 10000,
       maxRedirects: 5,
       baseURL: uilBaseUrl,
     }),
+    DatabaseModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],
