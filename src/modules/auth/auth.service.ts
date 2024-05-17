@@ -5,13 +5,13 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AdminService } from 'src/admin/admin.service';
+import { AdminService } from 'src/modules/admin/admin.service';
 import { JwtService } from '@nestjs/jwt';
 import { catchError, firstValueFrom, map } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
-import { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { AxiosError, AxiosRequestConfig } from 'axios';
 import { SignInDto } from './dto/sign-in.dto';
-import { Course } from '../interfaces/course.interface';
+import { Course } from '../../interfaces/course.interface';
 import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
@@ -33,14 +33,14 @@ export class AuthService {
       throw new UnauthorizedException('Your password is incorrect');
     }
 
-    const payload = { sub: user.admin_id, username: user.username };
+    const payload = { username: user.username, roles: 'admin' };
     return {
       access_token: await this.jwtService.signAsync(payload),
     };
   }
 
   async studentSignIn(username: string): Promise<{ access_token: string }> {
-    const payload = { username: username };
+    const payload = { username: username, roles: 'user' };
     return {
       access_token: await this.jwtService.signAsync(payload),
     };
@@ -59,7 +59,10 @@ export class AuthService {
           .pipe(
             catchError((error: AxiosError) => {
               this.logger.error(error);
-              throw new HttpException(`${error}`, HttpStatus.BAD_REQUEST);
+              throw new HttpException(
+                `${error}`,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+              );
             }),
           ),
       );
@@ -72,7 +75,10 @@ export class AuthService {
             .pipe(
               catchError((error: AxiosError) => {
                 this.logger.error(error);
-                throw new HttpException(error, HttpStatus.UNAUTHORIZED);
+                throw new HttpException(
+                  `${error}`,
+                  HttpStatus.INTERNAL_SERVER_ERROR,
+                );
               }),
               map((response) =>
                 response.data.data.map(
@@ -82,7 +88,7 @@ export class AuthService {
             ),
         );
 
-        const courseStatus = coursesArray.includes('GSE301') ? true : false;
+        // const courseStatus = coursesArray.includes('GSE301') ? true : false;
 
         // if (!courseStatus) {
         //   throw new HttpException(
@@ -97,7 +103,7 @@ export class AuthService {
           matric_number: data.data.student_number,
         };
 
-        this.databaseService.students.create({
+        await this.databaseService.students.create({
           data: studentDetails,
         });
 
@@ -130,24 +136,5 @@ export class AuthService {
       },
     };
     return axiosConfig;
-  }
-
-  async fetchStudentCourses(headers: object) {
-    const axiosConfig = this.setRequestHeaders(headers);
-    const coursesArray = await firstValueFrom(
-      this.httpService
-        .get('/courseRegistrations/my-course-registrations', axiosConfig)
-        .pipe(
-          catchError((error: AxiosError) => {
-            this.logger.error(error);
-            throw new HttpException(error, HttpStatus.UNAUTHORIZED);
-          }),
-          map((response) =>
-            response.data.data.map((course) => course.course.course_code),
-          ),
-        ),
-    );
-
-    return coursesArray;
   }
 }

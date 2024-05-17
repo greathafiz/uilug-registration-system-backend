@@ -5,11 +5,14 @@ import {
   HttpCode,
   HttpStatus,
   Post,
-  Request,
-  UseGuards,
+  /* Request,
+  UseGuards, */
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthGuard } from './auth.guard';
+/* import { AuthGuard } from '../common/guards/auth.guard';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { Role } from 'src/enums/role.enum';
+import { RolesGuard } from 'src/common/guards/roles.guard'; */
 import { SignInDto } from './dto/sign-in.dto';
 
 @Controller('auth')
@@ -21,19 +24,10 @@ export class AuthController {
   create(@Body() signInDto: SignInDto) {
     return this.authService.validateUser(signInDto);
   }
-  // @Post('login')
-  // create(@Body() signInDto: SignInDto) {
-  //   return this.authService.logIn(signInDto);
-  // }
 
-  /* @Get('dummy')
-  findAllCourses() {
-    return this.authService.checkCourse();
-  } */
-
+  /* @Get('profile')
   @UseGuards(AuthGuard)
-  @Get('profile')
   getProfile(@Request() req) {
     return req.user;
-  }
+  } */
 }
