@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { Prisma } from '@prisma/client';
 
@@ -24,12 +24,20 @@ export class SkillService {
   }
 
   async findOne(id: number) {
-    return this.databaseService.skills.findUnique({
+    const skill = await this.databaseService.skills.findUnique({
       where: {
         skill_id: id,
       },
       include: { trainer: true },
     });
+
+    if (!skill) {
+      throw new HttpException(
+        `No skill with the id ${id}`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return skill;
   }
 
   async update(id: number, updateSkillDto: Prisma.skillsUpdateInput) {
@@ -38,6 +46,19 @@ export class SkillService {
         skill_id: id,
       },
       data: updateSkillDto,
+    });
+  }
+
+  async reduceSlot(skill_id: number) {
+    return this.databaseService.skills.update({
+      where: {
+        skill_id,
+      },
+      data: {
+        slots: {
+          decrement: 1,
+        },
+      },
     });
   }
 

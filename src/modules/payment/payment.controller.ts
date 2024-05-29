@@ -37,10 +37,18 @@ export class PaymentController {
       const user = await this.studentService.findOne({
         student_id,
       });
+      const skill = await this.skillService.findOne(skill_id);
       // console.log('User object:', user); // Log user object to verify properties
 
       if (!user) {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      if (!skill) {
+        throw new HttpException(
+          `No skill with id ${skill_id}`,
+          HttpStatus.NOT_FOUND,
+        );
       }
 
       const paymentData = await this.paymentService.initializePayment(
@@ -64,14 +72,20 @@ export class PaymentController {
       // console.log(result);
 
       if (result.data.status === 'success') {
-        return await this.registrationService.create({
+        // Extract metadata
+        const studentId = +result.data.metadata.student_id;
+        const skillId = +result.data.metadata.skill_id;
+
+        const registration = await this.registrationService.create({
           student: {
-            connect: { student_id: +result.data.metadata.student_id },
+            connect: { student_id: studentId },
           },
           skill: {
-            connect: { skill_id: +result.data.metadata.skill_id },
+            connect: { skill_id: skillId },
           },
         });
+        await this.skillService.reduceSlot(skillId);
+        return registration;
       } else {
         throw new HttpException(
           'Payment verification failed',
