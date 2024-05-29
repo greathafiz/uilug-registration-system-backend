@@ -28,19 +28,19 @@ export class AuthService {
     username,
     password,
   }: SignInDto): Promise<{ access_token: string }> {
-    const user = await this.adminService.findOne(username);
-    if (user?.password !== password) {
+    const admin = await this.adminService.findOne(username);
+    if (admin?.password !== password) {
       throw new UnauthorizedException('Your password is incorrect');
     }
 
-    const payload = { username: user.username, roles: 'admin' };
+    const payload = { admin_id: admin.admin_id, roles: 'admin' };
     return {
       access_token: await this.jwtService.signAsync(payload),
     };
   }
 
-  async studentSignIn(username: string): Promise<{ access_token: string }> {
-    const payload = { username: username, roles: 'user' };
+  async studentSignIn(student_id: number): Promise<{ access_token: string }> {
+    const payload = { id: student_id, roles: 'user' };
     return {
       access_token: await this.jwtService.signAsync(payload),
     };
@@ -88,26 +88,28 @@ export class AuthService {
             ),
         );
 
-        // const courseStatus = coursesArray.includes('GSE301') ? true : false;
+        const courseStatus = coursesArray.includes('GSE301') ? true : false;
 
-        // if (!courseStatus) {
-        //   throw new HttpException(
-        //     'GSE301 not among registered courses',
-        //     HttpStatus.UNAUTHORIZED,
-        //   );
-        // }
+        if (!courseStatus) {
+          throw new HttpException(
+            'GSE301 not among registered courses',
+            HttpStatus.UNAUTHORIZED,
+          );
+        }
 
         const studentDetails = {
           full_name: data.data.fullname,
           email: data.data.email,
           matric_number: data.data.student_number,
+          department: data.data.department.name,
+          level: data.data.level.name,
         };
 
-        await this.databaseService.students.create({
+        const createdStudent = await this.databaseService.students.create({
           data: studentDetails,
         });
 
-        return this.studentSignIn(studentDetails.matric_number);
+        return this.studentSignIn(createdStudent.student_id);
       }
     } else {
       return this.adminSignIn({ username, password });

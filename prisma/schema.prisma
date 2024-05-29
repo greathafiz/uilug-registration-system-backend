@@ -16,8 +16,10 @@ datasource db {
 model students {
   student_id    Int            @id @default(autoincrement())
   matric_number String         @unique
-  full_name      String
+  full_name     String
   email         String         @unique
+  department    String
+  level         String
   registrations registrations?
 }
 
@@ -36,7 +38,7 @@ model skills {
   slots         Int
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  registrations registrations?
+  registrations registrations[]
 }
 
 model trainers {
@@ -52,6 +54,6 @@ model registrations {
   student         students @relation(fields: [student_id], references: [student_id])
   student_id      Int      @unique
   skill           skills   @relation(fields: [skill_id], references: [skill_id])
-  skill_id        Int      @unique
+  skill_id        Int
   date_registered DateTime @default(now())
 }
