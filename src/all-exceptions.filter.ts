@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 
 type ResponseObj = {
   statusCode: number;
@@ -17,11 +17,9 @@ type ResponseObj = {
 @Catch()
 export class AllExceptionsFilter extends BaseExceptionFilter {
   catch(exception: any, host: ArgumentsHost) {
-    // console.error(exception.message);
+    console.error(exception.message);
     const ctx = host.switchToHttp();
-    const request = ctx.getRequest<Request>();
     const response = ctx.getResponse<Response>();
-    const message = exception.message.replace(/\n/g, '');
 
     const responseObj: ResponseObj = {
       statusCode: 500,

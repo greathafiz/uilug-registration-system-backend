@@ -3,7 +3,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { AdminModule } from 'src/modules/admin/admin.module';
 import { JwtModule } from '@nestjs/jwt';
-import { jwtConstants, uilBaseUrl } from './constants';
+import { jwtConstants } from './constants';
 import { HttpModule } from '@nestjs/axios';
 import { DatabaseModule } from 'src/database/database.module';
 
@@ -18,7 +18,7 @@ import { DatabaseModule } from 'src/database/database.module';
     HttpModule.register({
       timeout: 10000,
       maxRedirects: 5,
-      baseURL: uilBaseUrl,
+      baseURL: 'https://portal.unilorin.edu.ng/api',
     }),
     DatabaseModule,
   ],
