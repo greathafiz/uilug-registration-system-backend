@@ -7,6 +7,7 @@ import {
   UseGuards,
   HttpException,
   HttpStatus,
+  Res,
 } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { Prisma } from '@prisma/client';
@@ -18,6 +19,7 @@ import { Role } from 'src/enums/role.enum';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { InitializePaymentDto } from './dto/initialize-payment.dto';
+import { Response } from 'express';
 
 @Controller('payments')
 export class PaymentController {
@@ -51,12 +53,7 @@ export class PaymentController {
         );
       }
 
-      const paymentData = await this.paymentService.initializePayment(
-        user,
-        skill_id,
-      );
-
-      return paymentData;
+      return await this.paymentService.initializePayment(user, skill_id);
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to initialize payment',
@@ -66,7 +63,10 @@ export class PaymentController {
   }
 
   @Get('callback')
-  async handleCallback(@Query('reference') reference: string) {
+  async handleCallback(
+    @Query('reference') reference: string,
+    @Res() res: Response,
+  ) {
     try {
       const result = await this.paymentService.verifyPayment(reference);
       // console.log(result);
@@ -76,7 +76,7 @@ export class PaymentController {
         const studentId = +result.data.metadata.student_id;
         const skillId = +result.data.metadata.skill_id;
 
-        const registration = await this.registrationService.create({
+        await this.registrationService.create({
           student: {
             connect: { student_id: studentId },
           },
@@ -85,18 +85,21 @@ export class PaymentController {
           },
         });
         await this.skillService.reduceSlot(skillId);
-        return registration;
+        return res.redirect(
+          `${process.env.PAYMENT_SUCCESS_URL}?reference=${reference}&skillId=${skillId}`,
+        );
       } else {
-        throw new HttpException(
-          'Payment verification failed',
-          HttpStatus.PAYMENT_REQUIRED,
+        res.redirect(
+          `${process.env.PAYMENT_FAILURE_URL}?reference=${reference}`,
         );
       }
     } catch (error) {
-      throw new HttpException(
-        error.message,
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      console.error('An error occured', error);
+      res.redirect(`${process.env.PAYMENT_ERROR_URL}`);
+      // throw new HttpException(
+      //   error.message,
+      //   error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      // );
     }
   }
 }
