@@ -8,6 +8,7 @@ import {
   HttpException,
   HttpStatus,
   Res,
+  BadRequestException,
 } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { Prisma } from '@prisma/client';
@@ -50,6 +51,12 @@ export class PaymentController {
         throw new HttpException(
           `No skill with id ${skill_id}`,
           HttpStatus.NOT_FOUND,
+        );
+      }
+
+      if (!skill.slots) {
+        throw new BadRequestException(
+          `There's no available slot for the chosen skill`,
         );
       }
 

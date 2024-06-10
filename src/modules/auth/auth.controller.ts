@@ -34,13 +34,7 @@ export class AuthController {
   @Get('profile')
   @UseGuards(AuthGuard)
   getProfile(@Req() req) {
-    if (req.user.roles == 'admin') {
-      return this.databaseService.admins.findUnique({
-        where: {
-          admin_id: req.user.id,
-        },
-      });
-    } else if (req.user.roles == 'user') {
+    if (req.user.roles == 'user') {
       return this.databaseService.students.findUnique({
         where: {
           student_id: req.user.id,

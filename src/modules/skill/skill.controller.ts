@@ -11,8 +11,6 @@ import {
   Query,
 } from '@nestjs/common';
 import { SkillService } from './skill.service';
-import { CreateSkillDto } from './dto/create-skill.dto';
-import { UpdateSkillDto } from './dto/update-skill.dto';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { Role } from 'src/enums/role.enum';
 import { Roles } from 'src/common/decorators/roles.decorator';
@@ -26,8 +24,23 @@ export class SkillController {
   @Roles(Role.Admin)
   @UseGuards(AuthGuard, RolesGuard)
   @Post()
-  create(@Body() createSkillDto: Prisma.skillsCreateInput) {
-    return this.skillService.create(createSkillDto);
+  create(
+    @Body()
+    {
+      skill_name,
+      description,
+      slots,
+      trainer_id,
+    }: Prisma.skillsUncheckedCreateInput,
+  ) {
+    return this.skillService.create({
+      skill_name: skill_name,
+      description: description,
+      slots: slots,
+      trainer: {
+        connect: { trainer_id: trainer_id },
+      },
+    });
   }
 
   @Get()
@@ -58,9 +71,3 @@ export class SkillController {
     return this.skillService.remove(id);
   }
 }
-
-/* @UseGuards(AuthGuard)
-  @Get('profile')
-  getProfile(@Request() req) {
-    return req.user;
-  } */

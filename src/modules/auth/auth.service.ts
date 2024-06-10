@@ -27,7 +27,7 @@ export class AuthService {
   async adminSignIn({
     username,
     password,
-  }: SignInDto): Promise<{ access_token: string }> {
+  }: SignInDto): Promise<{ access_token: string; roles: string }> {
     const admin = await this.adminService.findOne(username);
     if (admin?.password !== password) {
       throw new UnauthorizedException('Your password is incorrect');
@@ -36,13 +36,17 @@ export class AuthService {
     const payload = { admin_id: admin.admin_id, roles: 'admin' };
     return {
       access_token: await this.jwtService.signAsync(payload),
+      roles: 'admin',
     };
   }
 
-  async studentSignIn(student_id: number): Promise<{ access_token: string }> {
+  async studentSignIn(
+    student_id: number,
+  ): Promise<{ access_token: string; roles: string }> {
     const payload = { id: student_id, roles: 'user' };
     return {
       access_token: await this.jwtService.signAsync(payload),
+      roles: 'student',
     };
   }
 
@@ -88,14 +92,14 @@ export class AuthService {
             ),
         );
 
-        const courseStatus = coursesArray.includes('GSE301') ? true : false;
+        // const courseStatus = coursesArray.includes('GSE301') ? true : false;
 
-        if (!courseStatus) {
-          throw new HttpException(
-            'GSE301 not among registered courses',
-            HttpStatus.UNAUTHORIZED,
-          );
-        }
+        // if (!courseStatus) {
+        //   throw new HttpException(
+        //     'GSE301 not among registered courses',
+        //     HttpStatus.UNAUTHORIZED,
+        //   );
+        // }
 
         const existingStudent = await this.databaseService.students.findUnique({
           where: {

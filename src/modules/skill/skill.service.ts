@@ -6,9 +6,9 @@ import { Prisma } from '@prisma/client';
 export class SkillService {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async create(createSkillDto: Prisma.skillsCreateInput) {
+  async create(data: Prisma.skillsCreateInput) {
     return this.databaseService.skills.create({
-      data: createSkillDto,
+      data,
     });
   }
 
