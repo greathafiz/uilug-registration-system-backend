@@ -92,14 +92,14 @@ export class AuthService {
             ),
         );
 
-        // const courseStatus = coursesArray.includes('GSE301') ? true : false;
+        const courseStatus = coursesArray.includes('GSE301') ? true : false;
 
-        // if (!courseStatus) {
-        //   throw new HttpException(
-        //     'GSE301 not among registered courses',
-        //     HttpStatus.UNAUTHORIZED,
-        //   );
-        // }
+        if (!courseStatus) {
+          throw new HttpException(
+            'GSE301 not among registered courses',
+            HttpStatus.UNAUTHORIZED,
+          );
+        }
 
         const existingStudent = await this.databaseService.students.findUnique({
           where: {
