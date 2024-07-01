@@ -41,6 +41,9 @@ export class PaymentController {
         student_id,
       });
       const skill = await this.skillService.findOne(skill_id);
+      const regExists = await this.registrationService.findOne({
+        student_id: student_id,
+      });
       // console.log('User object:', user); // Log user object to verify properties
 
       if (!user) {
@@ -52,6 +55,10 @@ export class PaymentController {
           `No skill with id ${skill_id}`,
           HttpStatus.NOT_FOUND,
         );
+      }
+
+      if (regExists) {
+        throw new BadRequestException(`You already registered for a skill.`);
       }
 
       if (!skill.slots) {
