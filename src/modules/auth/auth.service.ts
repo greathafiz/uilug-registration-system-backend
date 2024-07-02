@@ -62,9 +62,9 @@ export class AuthService {
           })
           .pipe(
             catchError((error: AxiosError) => {
-              this.logger.error(error);
+              // this.logger.error(`${error.message}. ${JSON.stringify(error.response.data)}`);
               throw new HttpException(
-                `${error}`,
+                `${JSON.stringify(error.response.data)}`,
                 HttpStatus.INTERNAL_SERVER_ERROR,
               );
             }),
